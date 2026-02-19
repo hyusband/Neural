@@ -29,18 +29,29 @@ class Processor:
             return
 
         try:
-            category_str = self.groq.classify_text(transcript)
-            category = Category(category_str)
+            result = self.groq.process_text(transcript)
+            category_str = result.get("category", "LOG").upper()
+            refined_text = result.get("refined_text", transcript)
+            
+            try:
+                category = Category(category_str)
+            except ValueError:
+                if "TASK" in category_str: category = Category.TASK
+                elif "IDEA" in category_str: category = Category.IDEA
+                else: category = Category.LOG
+                
             console.print(f"[blue]Category:[/blue] {category.value}")
+            console.print(f"[bold]Refined:[/bold] {refined_text}")
         except Exception as e:
-            console.print(f"[bold red]Classification failed:[/bold red] {e}, defaulting to LOG")
+            console.print(f"[bold red]Processing failed:[/bold red] {e}, using raw transcript")
             category = Category.LOG
+            refined_text = transcript
 
-        note = save_note(transcript, category)
+        note = save_note(refined_text, category)
         console.print(f"[green]Saved to local DB[/green] (ID: {note.id})")
 
         try:
-            self.notion.create_page(transcript, category)
+            self.notion.create_page(refined_text, category)
             mark_as_synced(note.id)
             console.print("[bold green]Synced to Notion![/bold green]")
         except Exception as e:

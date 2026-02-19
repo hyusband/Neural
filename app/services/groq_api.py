@@ -15,30 +15,40 @@ class GroqService:
             )
             return transcription.text
 
-    def classify_text(self, text: str) -> str:
+    def process_text(self, text: str) -> dict:
         prompt = f"""
-        Classify the following text into one of these categories:
-        1. [TASK] - Actionable items, to-dos.
-        2. [IDEA] - Business ideas, concepts, creative thoughts.
-        3. [LOG] - Personal logs, journal entries, thoughts.
+        You are an intelligent assistant for a developer's CLI tool. 
+        Your job is to process the following raw voice transcription.
 
-        Return ONLY the category tag (e.g. TASK, IDEA, or LOG). Do not include brackets in the output, just the word.
-        
-        Text: "{text}"
+        1. **Refine**: Clean up the text. Remove filler words (like "eh", "um"), fix grammar, make it concise and professional. Keep the original meaning and language.
+        2. **Classify**: Categorize it into one of:
+           - [TASK]: Actionable items, to-dos.
+           - [IDEA]: Business ideas, concepts.
+           - [LOG]: Personal thoughts, journaling.
+
+        Return the result in JSON format with two keys: "category" and "refined_text".
+
+        Raw Text: "{text}"
         """
         
         completion = self.client.chat.completions.create(
             messages=[
                 {
+                    "role": "system",
+                    "content": "You are a helpful assistant that outputs JSON."
+                },
+                {
                     "role": "user",
                     "content": prompt,
                 }
             ],
-            model="llama3-70b-8192",
+            model="llama-3.3-70b-versatile",
+            response_format={"type": "json_object"}
         )
         
-        category = completion.choices[0].message.content.strip().upper()
-        if "TASK" in category: return "TASK"
-        if "IDEA" in category: return "IDEA"
-        if "LOG" in category: return "LOG"
-        return "LOG" # Default
+        try:
+            import json
+            content = completion.choices[0].message.content
+            return json.loads(content)
+        except Exception as e:
+            return {"category": "LOG", "refined_text": text}

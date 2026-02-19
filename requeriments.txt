@@ -8,3 +8,4 @@ groq
 notion-client
 sqlmodel
 rich
+setuptools
