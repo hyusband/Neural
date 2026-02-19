@@ -1,0 +1,10 @@
+typer[all]
+python-dotenv
+pydantic-settings
+sounddevice
+scipy
+numpy
+groq
+notion-client
+sqlmodel
+rich
