@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     NOTION_TOKEN: str
     NOTION_DATABASE_ID: str
     SQLITE_DB_PATH: str = "neural.db"
+    LANGUAGE: str = "es"
     
     SAMPLE_RATE: int = 16000
     CHANNELS: int = 1
